@@ -1,0 +1,187 @@
+form {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+/* Flexbox for Label & Input */
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+label {
+    width: 150px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: left;
+    margin-right: 20px;
+}
+
+input, select, textarea {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.radio-group, .checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+
+/* File Input */
+input[type="file"] {
+    border: 1px solid #ccc;
+    margin-top: 15px;
+}
+
+
+
+/* Submit Button */
+button {
+    background-color: #673AB7;
+    color: white;
+    shape-margin: 20px;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    margin-top: 15px;
+    border-radius: 30px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #311B92;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f9f9f9;
+}
+
+/* Table Container */
+.table-container {
+    width: 90%;
+    margin: auto;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+/* Table Header */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.table-header h2 {
+    color: #2c1c3c;
+}
+
+#refresh-btn {
+    background-color: transparent;
+    border: none;
+    color: #673AB7;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#refresh-btn i {
+    margin-right: 5px;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    border: none;
+    outline: none;
+    color: #52277f;
+    border-bottom: 2px solid black;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+td {
+    color: #333;
+}
+
+/* Actions Icons */
+.actions i {
+    margin: 0 8px;
+    cursor: pointer;
+    color: #673AB7;
+}
+
+.actions i:hover {
+    color: #311B92;
+}
+
+
+
+
+
+/* Navigation Bar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2f243a; /* Dark purple */
+    padding: 15px 20px;
+    color: white;
+}
+
+/* Logo */
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.logo img {
+    width: 30px; /* Adjust as needed */
+    height: auto;
+    margin-right: 8px;
+}
+
+/* Navigation Links */
+.nav-links {
+    list-style: none;
+    display: flex;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: white;
+}
+
+.nav-links .active {
+    color: #c87f6d;
+    font-weight: bold;
+}
+
