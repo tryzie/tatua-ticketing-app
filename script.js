@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const refreshBtn = document.getElementById("refresh-btn");
 
-    // Load submissions from sessionStorage
-    let submissions = JSON.parse(sessionStorage.getItem("submissions")) || [];
+    // Load submissions from localStorage
+    let submissions = JSON.parse(localStorage.getItem("submissions")) || [];
 
     // Navigation Handling
     navLinks.forEach(link => {
@@ -59,11 +59,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const entry = { ticketId, fullName, email, phone, subject, message, contactMethod, dateCreated, attachment };
+        const entry = {ticketId, fullName, email, phone, subject, message, contactMethod, dateCreated, attachment};
         submissions.push(entry);
 
-        // Store in sessionStorage
-        sessionStorage.setItem("submissions", JSON.stringify(submissions));
+        // Store in localStorage
+        localStorage.setItem("submissions", JSON.stringify(submissions));
 
         renderTable();
         form.reset();
@@ -140,8 +140,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const newMessage = prompt("Edit Message:", entry.message);
 
         if (newName && newEmail && newPhone && newSubject && newMessage) {
-            submissions[index] = { ...entry, fullName: newName, email: newEmail, phone: newPhone, subject: newSubject, message: newMessage };
-            sessionStorage.setItem("submissions", JSON.stringify(submissions)); // Update sessionStorage
+            submissions[index] = {
+                ...entry,
+                fullName: newName,
+                email: newEmail,
+                phone: newPhone,
+                subject: newSubject,
+                message: newMessage
+            };
+            localStorage.setItem("submissions", JSON.stringify(submissions)); // Update localStorage
             renderTable();
         } else {
             alert("Editing canceled.");
@@ -152,7 +159,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.deleteEntry = function (index) {
         if (confirm("Are you sure you want to delete this entry?")) {
             submissions.splice(index, 1);
-            sessionStorage.setItem("submissions", JSON.stringify(submissions)); // Update sessionStorage
+            localStorage.setItem("submissions", JSON.stringify(submissions)); // Update localStorage
             renderTable();
         }
     };
