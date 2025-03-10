@@ -90,12 +90,8 @@ body {
     background-color: transparent;
     border: none;
     color: #673AB7;
-    font-size: 16px;
     cursor: pointer;
-}
 
-#refresh-btn i {
-    margin-right: 5px;
 }
 
 /* Table Styling */
@@ -118,7 +114,7 @@ th, td {
 }
 
 td {
-    color: #333;
+    color: black;
 }
 
 /* Actions Icons */
@@ -132,16 +128,12 @@ td {
     color: #311B92;
 }
 
-
-
-
-
 /* Navigation Bar */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #2f243a; /* Dark purple */
+    background-color: #2f243a;
     padding: 15px 20px;
     color: white;
 }
@@ -150,12 +142,12 @@ td {
 .logo {
     display: flex;
     align-items: center;
-    font-size: 18px;
+    font-size: 25px;
     font-weight: bold;
 }
 
 .logo img {
-    width: 30px; /* Adjust as needed */
+    width: 45px;
     height: auto;
     margin-right: 8px;
 }
