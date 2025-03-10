@@ -6,23 +6,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const refreshBtn = document.getElementById("refresh-btn");
 
-    let submissions = [];
+    // Load submissions from sessionStorage
+    let submissions = JSON.parse(sessionStorage.getItem("submissions")) || [];
 
     // Navigation Handling
     navLinks.forEach(link => {
         link.addEventListener("click", function (event) {
             event.preventDefault();
-
-            if (this.textContent.trim() === "Raise Ticket") {
+            if (this.textContent === "Raise Ticket") {
                 formContainer.style.display = "block";
                 tableContainer.style.display = "none";
-            } else if (this.textContent.trim() === "Tickets List") {
+            } else if (this.textContent === "Tickets List") {
                 formContainer.style.display = "none";
                 tableContainer.style.display = "block";
-                renderTable();
+                renderTable(); // Ensure table updates
             }
-
-            // Update active class
             navLinks.forEach(nav => nav.classList.remove("active"));
             this.classList.add("active");
         });
@@ -37,29 +35,43 @@ document.addEventListener("DOMContentLoaded", function () {
         const phone = document.getElementById("phone").value.trim();
         const subject = document.getElementById("subject").value.trim();
         const message = document.getElementById("message").value.trim();
-        const contactMethod = document.querySelector("input[name='contact-method']:checked")?.value;
+        const contactMethod = document.querySelector("input[name='contact-method']:checked").value;
         const dateCreated = new Date().toISOString().split("T")[0];
         const ticketId = submissions.length + 1;
         const attachment = document.getElementById("attachment").files[0] || null;
 
-        if (!fullName || !email || !phone || !subject || !message || !contactMethod) {
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
+        // Phone validation regex
+        const phonePattern = /^[0-9]{10}$/;
+        if (!phonePattern.test(phone)) {
+            alert("Please enter a valid 10-digit phone number.");
+            return;
+        }
+
+        if (!fullName || !email || !phone || !subject || !message) {
             alert("All fields are required.");
             return;
         }
 
         const entry = { ticketId, fullName, email, phone, subject, message, contactMethod, dateCreated, attachment };
         submissions.push(entry);
+
+        // Store in sessionStorage
+        sessionStorage.setItem("submissions", JSON.stringify(submissions));
+
         renderTable();
         form.reset();
     });
 
     // Render Table Function
     function renderTable() {
-        tableBody.innerHTML = "";
-        if (submissions.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5">No tickets available.</td></tr>`;
-            return;
-        }
+        tableBody.innerHTML = ""; // Clear table
 
         submissions.forEach((entry, index) => {
             const row = `<tr>
@@ -80,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Refresh Button
+    // Refresh Button Function
     refreshBtn.addEventListener("click", function () {
         renderTable();
     });
@@ -129,65 +141,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (newName && newEmail && newPhone && newSubject && newMessage) {
             submissions[index] = { ...entry, fullName: newName, email: newEmail, phone: newPhone, subject: newSubject, message: newMessage };
+            sessionStorage.setItem("submissions", JSON.stringify(submissions)); // Update sessionStorage
             renderTable();
         } else {
             alert("Editing canceled.");
         }
     };
 
-    // Delete Entry
+    // Delete Entry Function
     window.deleteEntry = function (index) {
         if (confirm("Are you sure you want to delete this entry?")) {
             submissions.splice(index, 1);
+            sessionStorage.setItem("submissions", JSON.stringify(submissions)); // Update sessionStorage
             renderTable();
         }
     };
-});
 
 
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("ticket-form");
-
-    // Load saved form data from sessionStorage
-    function loadFormData() {
-        const savedData = sessionStorage.getItem("ticketFormData");
-        if (savedData) {
-            const formData = JSON.parse(savedData);
-            Object.keys(formData).forEach(key => {
-                const input = document.getElementById(key);
-                if (input) {
-                    input.value = formData[key];
-                }
-            });
-        }
+    if (tableContainer.style.display === "block") {
+        renderTable();
     }
-
-    // Save form data to sessionStorage
-    function saveFormData() {
-        const formData = {
-            "full-name": document.getElementById("full-name").value,
-            "email": document.getElementById("email").value,
-            "phone": document.getElementById("phone").value,
-            "subject": document.getElementById("subject").value,
-            "message": document.getElementById("message").value
-        };
-        sessionStorage.setItem("ticketFormData", JSON.stringify(formData));
-    }
-
-    // Attach event listeners to save data on input changes
-    form.querySelectorAll("input, textarea, select").forEach(input => {
-        input.addEventListener("input", saveFormData);
-    });
-
-    // Clear sessionStorage on successful form submission
-    form.addEventListener("submit", function (event) {
-        event.preventDefault(); // Prevent actual form submission
-        sessionStorage.removeItem("ticketFormData");
-        form.reset();
-        alert("Form submitted successfully!");
-    });
-
-    loadFormData(); // Load data when page loads
 });
