@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Tatua</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
 <nav class="navbar">
@@ -18,7 +19,7 @@
 </nav>
 
 <div id="form-container">
-    <p>Have any enquiries? Fill this form and we'll get back to you as soon as possible.</p>
+    <p>Have any enquiries? Fill this form and, we'll get back to you as soon as possible.</p>
     <form id="ticket-form">
         <div class="form-group">
             <label for="full-name">Full Name:</label>
@@ -47,7 +48,7 @@
         </div>
         <div class="radio-group">
             <label>Preferred Contact:</label>
-            <label><input type="radio" name="contact-method" value="email"> Email</label>
+            <label><input type="radio" name="contact-method" value="email" checked> Email</label>
             <label><input type="radio" name="contact-method" value="phone"> Phone</label>
         </div>
         <div class="form-group">
@@ -83,44 +84,47 @@
     <div class="pagination" id="pagination"></div>
 </div>
 
+<!-- Sort Popup -->
 <div id="sort-popup" class="popup" style="display: none">
     <div class="popup-content">
         <div class="popup-header">
             <div class="popup-header-left">
-            <img src="images/sort-icon.svg" alt="">
-            <h3>Sort Table</h3>
-        </div>
-        <button class="cancel" onclick="closePopup()"><img src="images/cancel-icon.svg" alt="close"></button>
+                <img src="images/sort-header.svg" alt="">
+                <h3>Sort Table</h3>
+            </div>
+            <button class="cancel" onclick="closePopup()"><img src="images/cancel-icon.svg" alt="close"></button>
         </div>
         <div id="sort-fields"></div>
         <button id="add-sort"><img src="images/add-icon.svg" alt="add">Add Sorter</button>
         <div class="popup-footer">
-        <button id="reset-sort">Reset Sort</button>
-        <button id="submit-sort">Submit</button>
+            <button id="reset-sort">Reset Sort</button>
+            <button id="submit-sort">Submit</button>
         </div>
     </div>
 </div>
 
+<!-- Filter Popup -->
 <div id="filter-popup" class="popup" style="display: none">
     <div class="popup-content">
         <div class="popup-header">
             <div class="popup-header-left">
-                <img src="images/filter-icon.svg" alt="">
+                <img src="images/filter-header.svg" alt="">
                 <h3>Filter Table</h3>
             </div>
-        <button class="cancel" onclick="closePopup()"><img src="images/cancel-icon.svg" alt="close"></button>
+            <button class="cancel" onclick="closePopup()"><img src="images/cancel-icon.svg" alt="close"></button>
         </div>
         <div id="filter-fields"></div>
         <button id="add-filter"><img src="images/filter-with-plus.svg" alt="filter">Add Filter</button>
         <div class="popup-footer">
-        <button id="reset-filter">Reset Filter</button>
-        <button id="submit-filter">Submit</button>
+            <button id="reset-filter">Reset Filter</button>
+            <button id="submit-filter">Submit</button>
         </div>
     </div>
 </div>
 
+<!-- Success Popup (Green Background) -->
 <div id="success-popup" class="popup" style="display: none">
-    <div class="popup-content">
+    <div class="popup-content" style="background-color: green; color:whitesmoke;">
         <h3>Success!</h3>
         <p>Your ticket has been submitted successfully.</p>
         <button onclick="closePopup()">OK</button>

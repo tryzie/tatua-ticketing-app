@@ -1,7 +1,48 @@
-//global variables
+// Global variables
 let sortCriteria = [];
 let filterCriteria = [];
 let submissions = [];
+let currentPage = 1;
+
+// AES Encryption Helper Functions
+const encryptionKey = "PHnBl3IFFVmLzXdPGaaJvF8pCrCmRuCHjp0GhtU3bt8=";
+
+function encryptData(data) {
+    try {
+        const jsonString = JSON.stringify(data);
+        return CryptoJS.AES.encrypt(jsonString, encryptionKey).toString();
+    } catch (error) {
+        console.error("Encryption error:", error);
+        return null;
+    }
+}
+
+function decryptData(encryptedData) {
+    try {
+        const decrypted = CryptoJS.AES.decrypt(encryptedData, encryptionKey);
+        const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error("Decryption error:", error);
+        return null;
+    }
+}
+
+// Local Storage Functions
+function saveToLocalStorage(key, data) {
+    const encrypted = encryptData(data);
+    if (encrypted) {
+        localStorage.setItem(key, encrypted);
+        return true;
+    }
+    return false;
+}
+
+function loadFromLocalStorage(key) {
+    const encrypted = localStorage.getItem(key);
+    if (!encrypted) return null;
+    return decryptData(encrypted);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     const elements = {
@@ -27,9 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
         submitFilterBtn: document.getElementById("submit-filter")
     };
 
-
-    // Load submissions from localStorage
-    submissions = JSON.parse(localStorage.getItem("submissions")) || [];
+    // Load stored submissions
+    submissions = loadFromLocalStorage("submissions") || [];
 
     // Navigation
     elements.navLinks.forEach(link => {
@@ -40,11 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Form Submission
+    // Form submission
     elements.form.addEventListener("submit", async e => {
         e.preventDefault();
         const formData = getFormData();
-
         if (!validateForm(formData)) return;
 
         const formattedPhone = formatPhoneNumber(formData.phone);
@@ -55,13 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const entry = await createEntry(formData, formattedPhone);
         submissions.push(entry);
-        localStorage.setItem("submissions", JSON.stringify(submissions));
+        saveToLocalStorage("submissions", submissions);
         elements.form.reset();
         showSuccessPopup();
         if (elements.tableContainer.style.display === "block") renderTable();
     });
 
-    // change views
     function toggleView(view) {
         elements.formContainer.style.display = view === "Raise Ticket" ? "block" : "none";
         elements.tableContainer.style.display = view === "Tickets List" ? "block" : "none";
@@ -88,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function validateForm(data) {
         const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const phonePattern = /^(254|\+254)[0-9]{9}$|(07|01)[0-9]{8}$/;
-
         if (Object.values(data).some(val => !val && val !== null)) {
             alert("All fields are required.");
             return false;
@@ -134,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.successPopup.style.display = "flex";
     }
 
-    // Sort and Filter Logic
+    // Sort and Filter popups (apply changes on submit)
     elements.sortBtn.addEventListener("click", () => {
         elements.sortPopup.style.display = "flex";
         renderSortFields();
@@ -158,15 +195,14 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.resetSortBtn.addEventListener("click", () => {
         sortCriteria = [];
         renderSortFields();
-        renderTable();
     });
 
     elements.resetFilterBtn.addEventListener("click", () => {
         filterCriteria = [];
         renderFilterFields();
-        renderTable();
     });
 
+    // Apply sort and filter only when clicking Submit
     elements.submitSortBtn.addEventListener("click", () => {
         renderTable();
         closePopup();
@@ -177,10 +213,9 @@ document.addEventListener("DOMContentLoaded", () => {
         closePopup();
     });
 
-    // Event Listeners
     elements.refreshBtn.addEventListener("click", renderTable);
 
-    // Initial Render
+    // Initial render
     renderTable();
     toggleView("Raise Ticket");
 });
@@ -192,31 +227,31 @@ function renderTable() {
         pagination: document.getElementById("pagination")
     };
     const ITEMS_PER_PAGE = 5;
-    let currentPage = 1;
-
-    let data = [...submissions];
-    data = applyFilters(data);
-    data = applySorts(data);
-    const paginatedData = paginateData(data, currentPage, ITEMS_PER_PAGE);
+    const filteredData = applyFilters([...submissions]);
+    const sortedData = applySorts(filteredData);
+    const totalItems = sortedData.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    const paginatedData = paginateData(sortedData, currentPage, ITEMS_PER_PAGE);
 
     elements.tableBody.innerHTML = paginatedData.map((entry, index) => `
         <tr>
             <td>${entry.ticketId}</td>
-            <td>${entry.fullName}<br><small>${entry.email} | ${entry.phone}</small></td>
+            <td>${entry.fullName}<br><small>${entry.contactMethod === "email" ? entry.email : entry.phone}</small></td>
             <td>${entry.subject}<br><small>${entry.message}</small></td>
             <td>${entry.dateCreated}</td>
             <td>
-                <button class="action-btn info-btn" onclick="showInfo(${index})"><img src="images/show-info-icon.svg" alt="show info"></button>
-                <button class="action-btn download-btn" onclick="downloadAttachment(${index})"><img src="images/download-icon.svg" alt="download"></button>
-                ${entry.contactMethod === "phone" ? `<button class="action-btn call-btn" onclick="triggerCall('${entry.phone}')"><img src="images/phone-icon.svg" alt="call"></button>` : ""}
-                ${entry.contactMethod === "email" ? `<button class="action-btn email-btn" onclick="sendEmail('${entry.email}')"><img src="images/email-icon.svg" alt="email"></button>` : ""}
-                <button class="action-btn edit-btn" onclick="editEntry(${index})"><img src="images/edit-icon.svg" alt="edit"></button>
-                <button class="action-btn delete-btn" onclick="deleteEntry(${index})"><img src="images/trash-can-icon.svg" alt="delete"></button>
+                <button class="action-btn info-btn" onclick="showInfo(${(currentPage-1)*ITEMS_PER_PAGE + index})"><img src="images/show-info-icon.svg" alt="show info"></button>
+                <button class="action-btn download-btn" onclick="downloadAttachment(${(currentPage-1)*ITEMS_PER_PAGE + index})"><img src="images/download-icon.svg" alt="download"></button>
+                ${entry.contactMethod === "phone" ? `<button class="action-btn call-btn" onclick="triggerCall('${entry.phone}')"><img src="images/phone-icon.svg" alt="call"></button>`
+        : `<button class="action-btn email-btn" onclick="sendEmail('${entry.email}')"><img src="images/email-icon.svg" alt="email"></button>`}
+                <button class="action-btn edit-btn" onclick="editEntry(${(currentPage-1)*ITEMS_PER_PAGE + index})"><img src="images/edit-icon.svg" alt="edit"></button>
+                <button class="action-btn delete-btn" onclick="deleteEntry(${(currentPage-1)*ITEMS_PER_PAGE + index})"><img src="images/trash-can-icon.svg" alt="delete"></button>
             </td>
         </tr>
     `).join("");
 
-    renderPagination(data.length, currentPage, ITEMS_PER_PAGE);
+    renderPagination(totalItems, currentPage, ITEMS_PER_PAGE);
 }
 
 function paginateData(data, currentPage, ITEMS_PER_PAGE) {
@@ -224,64 +259,99 @@ function paginateData(data, currentPage, ITEMS_PER_PAGE) {
     return data.slice(start, start + ITEMS_PER_PAGE);
 }
 
-function renderPagination(totalItems, currentPage, ITEMS_PER_PAGE) {
-    const elements = {
-        pagination: document.getElementById("pagination")
-    };
+function renderPagination(totalItems, ITEMS_PER_PAGE) {
+    const paginationEl = document.getElementById("pagination");
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-    elements.pagination.innerHTML = "";
-    for (let i = 1; i <= totalPages; i++) {
-        const button = document.createElement("button");
-        button.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-        button.textContent = i;
-        button.addEventListener("click", () => {
-            currentPage = i;
+    paginationEl.innerHTML = "";
+
+    // First button
+    const firstBtn = document.createElement("button");
+    firstBtn.className = "page-btn";
+    firstBtn.textContent = "First";
+    firstBtn.disabled = currentPage === 1;
+    firstBtn.addEventListener("click", () => {
+        currentPage = 1;
+        renderTable();
+    });
+    paginationEl.appendChild(firstBtn);
+
+    // Previous button
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "page-btn";
+    prevBtn.textContent = "Previous";
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+            currentPage--;
             renderTable();
-        });
-        elements.pagination.appendChild(button);
-    }
+        }
+    });
+    paginationEl.appendChild(prevBtn);
+
+    // Page info
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Page ${currentPage} `;
+    paginationEl.appendChild(pageInfo);
+
+    // Next button
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "page-btn";
+    nextBtn.textContent = "Next";
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+        }
+    });
+    paginationEl.appendChild(nextBtn);
+
+    // Last button
+    const lastBtn = document.createElement("button");
+    lastBtn.className = "page-btn";
+    lastBtn.textContent = "Last page";
+    lastBtn.disabled = currentPage === totalPages;
+    lastBtn.addEventListener("click", () => {
+        currentPage = totalPages;
+        renderTable();
+    });
+    paginationEl.appendChild(lastBtn);
 }
 
-// Global functions for popup handling
+// Popup handling
 function closePopup() {
     document.getElementById("success-popup").style.display = "none";
     document.getElementById("sort-popup").style.display = "none";
     document.getElementById("filter-popup").style.display = "none";
+    const modal = document.querySelector(".modal-container");
+    if (modal) modal.remove();
 }
 
-// Global functions for sort and filter
+// Sort and Filter Functions
 function updateSort(index, key, value) {
     sortCriteria[index][key] = value;
-    renderTable();
+    renderSortFields();
 }
 
 function removeSort(index) {
     sortCriteria.splice(index, 1);
     renderSortFields();
-    renderTable();
 }
 
 function updateFilter(index, key, value) {
     filterCriteria[index][key] = value;
-    renderTable();
+    renderFilterFields();
 }
 
 function removeFilter(index) {
     filterCriteria.splice(index, 1);
     renderFilterFields();
-    renderTable();
 }
 
-// filter rendering function with conditional input types
 function renderFilterFields() {
-    const elements = {
-        filterFields: document.getElementById("filter-fields")
-    };
-
+    const elements = { filterFields: document.getElementById("filter-fields") };
     elements.filterFields.innerHTML = filterCriteria.map((filter, index) => {
-        // Determine input type based on column
         let inputField;
-
         if (filter.column === "ticketId") {
             inputField = `<input type="number" value="${filter.value}" oninput="updateFilter(${index}, 'value', this.value)">`;
         } else if (filter.column === "dateCreated") {
@@ -298,7 +368,6 @@ function renderFilterFields() {
         } else {
             inputField = `<input type="text" value="${filter.value}" oninput="updateFilter(${index}, 'value', this.value)">`;
         }
-
         return `
             <div class="filter-field">
                 <select onchange="updateFilter(${index}, 'column', this.value)">
@@ -321,12 +390,8 @@ function renderFilterFields() {
     }).join("");
 }
 
-//sort rendering
 function renderSortFields() {
-    const elements = {
-        sortFields: document.getElementById("sort-fields")
-    };
-
+    const elements = { sortFields: document.getElementById("sort-fields") };
     elements.sortFields.innerHTML = sortCriteria.map((sort, index) => `
         <div class="sort-field">
             <select onchange="updateSort(${index}, 'column', this.value)">
@@ -344,31 +409,24 @@ function renderSortFields() {
     `).join("");
 }
 
-// sort and filter logic
 function applySorts(data) {
     return [...data].sort((a, b) => {
         for (let sort of sortCriteria) {
             const valueA = a[sort.column];
             const valueB = b[sort.column];
-
             if (valueA !== valueB) {
                 if (sort.column === "ticketId") {
-                    // Numeric comparison
                     return sort.order === "ascending" ?
                         (parseInt(valueA) - parseInt(valueB)) :
                         (parseInt(valueB) - parseInt(valueA));
                 } else if (sort.column === "dateCreated") {
-                    // Date comparison
                     const dateA = new Date(valueA);
                     const dateB = new Date(valueB);
-                    return sort.order === "ascending" ?
-                        (dateA - dateB) :
-                        (dateB - dateA);
+                    return sort.order === "ascending" ? (dateA - dateB) : (dateB - dateA);
                 } else {
-                    // String comparison
                     return sort.order === "ascending" ?
-                        (valueA.toString().localeCompare(valueB.toString())) :
-                        (valueB.toString().localeCompare(valueA.toString()));
+                        valueA.toString().localeCompare(valueB.toString()) :
+                        valueB.toString().localeCompare(valueA.toString());
                 }
             }
         }
@@ -381,36 +439,27 @@ function applyFilters(data) {
         return filterCriteria.every(filter => {
             const value = entry[filter.column];
             const filterValue = filter.value;
-
-            if (filterValue === "") return true; // Skip empty filters
-
+            if (filterValue === "") return true;
             switch (filter.column) {
                 case "ticketId":
-                    // Numeric comparison
                     const numVal = parseInt(value);
                     const numFilterVal = parseInt(filterValue);
-
                     switch (filter.relation) {
                         case "equals": return numVal === numFilterVal;
                         case "greater": return numVal > numFilterVal;
                         case "less": return numVal < numFilterVal;
                     }
                     break;
-
                 case "dateCreated":
-                    // Date comparison
                     const dateVal = new Date(value);
                     const dateFilterVal = new Date(filterValue);
-
                     switch (filter.relation) {
                         case "equals": return dateVal.toDateString() === dateFilterVal.toDateString();
                         case "greater": return dateVal > dateFilterVal;
                         case "less": return dateVal < dateFilterVal;
                     }
                     break;
-
                 default:
-                    // String comparison
                     switch (filter.relation) {
                         case "equals":
                             return value.toString().toLowerCase() === filterValue.toLowerCase();
@@ -420,7 +469,6 @@ function applyFilters(data) {
                             return value.toString().toLowerCase() < filterValue.toLowerCase();
                     }
             }
-
             return false;
         });
     });
@@ -434,7 +482,6 @@ function showInfo(index) {
             `<embed src="${entry.attachment}" width="100%" height="400px" type="application/pdf">` :
             `<img src="${entry.attachment}" alt="Attachment" style="max-width: 100%; height: auto;">`) :
         "<p>No attachment uploaded.</p>";
-
     const modal = document.createElement("div");
     modal.classList.add("modal-container");
     modal.innerHTML = `
@@ -447,14 +494,70 @@ function showInfo(index) {
             <p><strong>Message:</strong> ${entry.message}</p>
             <p><strong>Attachment:</strong></p>
             ${attachmentPreview}
-            <button onclick="closeModal()">Close</button>
+            <button onclick="closePopup()">Close</button>
         </div>`;
     document.body.appendChild(modal);
 }
 
-function closeModal() {
-    const modal = document.querySelector(".modal-container");
-    if (modal) modal.remove();
+function editEntry(index) {
+    const entry = submissions[index];
+    const modal = document.createElement("div");
+    modal.classList.add("modal-container");
+    modal.innerHTML = `
+        <div class="modal">
+            <h2>Edit Ticket #${entry.ticketId}</h2>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label for="edit-fullName">Full Name:</label>
+                    <input type="text" id="edit-fullName" name="fullName" value="${entry.fullName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-email">Email:</label>
+                    <input type="email" id="edit-email" name="email" value="${entry.email}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-phone">Phone:</label>
+                    <input type="tel" id="edit-phone" name="phone" value="${entry.phone}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-subject">Subject:</label>
+                    <select id="edit-subject" name="subject" required>
+                        <option value="technical" ${entry.subject==="technical"?"selected":""}>Technical Issue</option>
+                        <option value="billing" ${entry.subject==="billing"?"selected":""}>Billing</option>
+                        <option value="general" ${entry.subject==="general"?"selected":""}>General Inquiry</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-message">Message:</label>
+                    <textarea id="edit-message" name="message" rows="4" required>${entry.message}</textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" onclick="closePopup()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const form = document.getElementById("edit-form");
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        entry.fullName = formData.get("fullName").trim();
+        entry.email = formData.get("email").trim();
+        entry.phone = formData.get("phone").trim();
+        entry.subject = formData.get("subject");
+        entry.message = formData.get("message").trim();
+        saveAndRenderTable();
+        closePopup();
+    });
+}
+
+function deleteEntry(index) {
+    if (confirm("Are you sure you want to delete this ticket?")) {
+        submissions.splice(index, 1);
+        saveAndRenderTable();
+    }
 }
 
 function downloadAttachment(index) {
@@ -479,41 +582,7 @@ function sendEmail(email) {
     window.location.href = `mailto:${email}`;
 }
 
-function editEntry(index) {
-    const entry = submissions[index];
-    const updated = promptForUpdates(entry);
-    if (updated) {
-        submissions[index] = { ...entry, ...updated };
-        saveAndRenderTable();
-    }
-}
-
-function deleteEntry(index) {
-    if (confirm("Are you sure you want to delete this ticket?")) {
-        submissions.splice(index, 1);
-        saveAndRenderTable();
-    }
-}
-
-function promptForUpdates(entry) {
-    const fields = [
-        { key: "fullName", label: "Full Name" },
-        { key: "email", label: "Email" },
-        { key: "phone", label: "Phone" },
-        { key: "subject", label: "Subject" },
-        { key: "message", label: "Message" }
-    ];
-
-    const updated = {};
-    for (const { key, label } of fields) {
-        const value = prompt(`Edit ${label}:`, entry[key]);
-        if (value === null) return null; // User cancelled
-        updated[key] = value;
-    }
-    return updated;
-}
-
 function saveAndRenderTable() {
-    localStorage.setItem("submissions", JSON.stringify(submissions));
+    saveToLocalStorage("submissions", submissions);
     renderTable();
 }
