@@ -236,9 +236,9 @@ function renderTable() {
 
     elements.tableBody.innerHTML = paginatedData.map((entry, index) => `
         <tr>
-            <td>${entry.ticketId}</td>
-            <td>${entry.fullName}<br><small>${entry.contactMethod === "email" ? entry.email : entry.phone}</small></td>
-            <td>${entry.subject}<br><small>${entry.message}</small></td>
+            <td><strong>${entry.ticketId}</strong></td>
+            <td><strong>${entry.fullName}</strong><br><small>${entry.contactMethod === "email" ? entry.email : entry.phone}</small></td>
+            <td><strong>${entry.subject}</strong><br><small>${entry.message}</small></td>
             <td>${entry.dateCreated}</td>
             <td>
                 <button class="action-btn info-btn" onclick="showInfo(${(currentPage-1)*ITEMS_PER_PAGE + index})"><img src="images/show-info-icon.svg" alt="show info"></button>
@@ -494,6 +494,7 @@ function showInfo(index) {
             <p><strong>Message:</strong> ${entry.message}</p>
             <p><strong>Attachment:</strong></p>
             ${attachmentPreview}
+            <br>
             <button onclick="closePopup()">Close</button>
         </div>`;
     document.body.appendChild(modal);

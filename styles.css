@@ -153,7 +153,7 @@ input:focus, select:focus, textarea:focus {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 25px;
     padding: 5px;
     transition: transform 0.2s;
 }
